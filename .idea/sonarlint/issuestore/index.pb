@@ -10,3 +10,5 @@ X
 -src/ServerMano/resources/dir1/dir2/index.html,6/9/69eccb8e1faf2b712c24dde6d71539eb5dac4234
 S
 #src/ServerMano/resources/index.html,4/c/4c7e46d255e359c565a0980a6b9fb079e8720cb3
+_
+/src/ServerMano/resources/upload/Idarbinimas.txt,a/9/a935d83de83cc6843b12d5d664509b150fa28f29
