@@ -12,9 +12,11 @@ public class Main {
 
     public static void main(String[] args) {
         try (ServerSocket sc = new ServerSocket(PORT)) {
-            System.out.println("Server listening on "+PORT);
+            System.out.println("Server listening on " + PORT);
             File rootDir = new File(ROOT_DIR);
-            if (!rootDir.exists()){ System.err.println("Root directory "+ROOT_DIR+" do not exist");}
+            if (!rootDir.exists()) {
+                System.err.println("Root directory " + ROOT_DIR + " do not exist");
+            }
             while (true) {
                 Socket socket = sc.accept();
                 try (InputStream is = socket.getInputStream();
@@ -41,7 +43,7 @@ public class Main {
                                     byte[] imageData = fis.readAllBytes();
                                     bufferedWriter.write("HTTP/1.1 200 OK\r\n");
                                     bufferedWriter.write("Content-Type: image/png\r\n");
-                                    bufferedWriter.write("Content-Length: "+imageData.length+"\r\n");
+                                    bufferedWriter.write("Content-Length: " + imageData.length + "\r\n");
                                     bufferedWriter.write("\r\n");
                                     bufferedWriter.flush();
                                     BufferedOutputStream bos = new BufferedOutputStream(outputStream);
@@ -94,12 +96,47 @@ public class Main {
                             bufferedWriter.write("\r\n");
                             bufferedWriter.flush();
                         }
-                    } else if (requestParsed[0].equals("POST")){
-                        for (int i = 0; i < header.size(); i++) {
-                            System.out.println(header.get(i));
+                    } else if (requestParsed[0].equals("POST")) {
+                        ArrayList<String> uploadData = new ArrayList();
+                        boolean readUploadBuffer = true;
+                        int uploadBufferStartEndMarks = 0;
+                        String lineUpload;
+                        String uplodedFileName = null;
+                        while (readUploadBuffer) {
+                            lineUpload = bufferedReader.readLine();
+                            uploadData.add(lineUpload);
+                            if (lineUpload.length() > 24) {
+                                if ("Content-Disposition:".equals(lineUpload.substring(0, 20))) {
+                                    String[] lineUploadParsed = lineUpload.split(";");
+                                    String fileParameter = (lineUploadParsed[2].split("="))[1];
+                                    uplodedFileName = (fileParameter.substring(1, fileParameter.length() - 1));
+                                } else if ("------WebKitFormBoundary".equals(lineUpload.substring(0, 24))) {
+                                    uploadBufferStartEndMarks++;
+                                    if (uploadBufferStartEndMarks == 2) {
+                                        readUploadBuffer = false;
+                                    }
+                                }
+                            }
                         }
-
-
+                        if (uplodedFileName != null) {
+                            FileOutputStream fosUpload = new FileOutputStream(ROOT_DIR + "/upload/" + uplodedFileName);
+                            Writer writerUpoload = new OutputStreamWriter(fosUpload);
+                            BufferedWriter bwUpload = new BufferedWriter(writerUpoload);
+                            for (int i = 4; i < uploadData.size()-2; i++) {
+                                 bwUpload.write(uploadData.get(i)+"\r\n");
+                            }
+                            bwUpload.flush();
+                            bwUpload.close();
+                            writerUpoload.close();
+                            fosUpload.close();
+                            bufferedWriter.write("HTTP/1.1 200 OK\r\n");
+                            bufferedWriter.write("Content-Type: text/html\r\n");
+                            bufferedWriter.write("\r\n");
+                            bufferedWriter.write("<html><body>");
+                            bufferedWriter.write("<h3>File "+uplodedFileName+" uploded</h3>");
+                            bufferedWriter.write("</body></html>\r\n");
+                            bufferedWriter.flush();
+                        }
                     } else {
                         bufferedWriter.write("HTTP/1.1 400 Bad Request\r\n");
                         bufferedWriter.write("Server: Java MyServer\r\n");
