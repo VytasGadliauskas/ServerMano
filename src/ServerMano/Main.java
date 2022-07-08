@@ -1,9 +1,7 @@
 package ServerMano;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -15,6 +13,7 @@ import java.util.*;
  * <p>
  * dir=first
  * dir=last
+ * dir2?sort=asc&dir=last
  */
 
 public class Main {
@@ -125,10 +124,12 @@ public class Main {
                                 bufferedWriter.flush();
                             } else if (!getFile.exists()) {
                                 ///
-                                ///  jei kriepiasi i /servlet bandau iskviesti klase pagal pavadinima
+                                ///  jei kriepiasi i /servlet bandau isskviesti klase pagal pavadinima
                                 ///  ir paduoti jam parametus.
                                 ///
-                                ///  BetKokiaKlase.getClass.super.MyServlet  <-- parameters or null
+                                ///  Igyvendinti servletai:
+                                ///  public class EchoTestas extends MyServlet
+                                ///  public class KitasServletas extends MyServlet
                                 ///
                                 if ("servlet".equals(requestFileName.split("/")[1])) {
                                     if (requestFileName.split("/").length > 2) {
