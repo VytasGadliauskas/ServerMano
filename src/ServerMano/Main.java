@@ -1,10 +1,19 @@
 package ServerMano;
 
 import java.io.*;
+import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.util.*;
+
+/**
+ * localhost:8888/dir1?sort=desc
+ * localhost:8888/dir1?sort=asc
+ * <p>
+ * dir=first
+ * dir=last
+ */
 
 public class Main {
     public static final String ROOT_DIR = "src/ServerMano/resources";
@@ -31,11 +40,23 @@ public class Main {
                         header.add(line);
                     }
                     if (header.size() > 0) {
-
                         String[] requestParsed = header.get(0).split(" ");
+                        String requestFileName = requestParsed[1];
+                        HashMap<String, String> requestParameters = null;
+                        if (requestParsed[1].indexOf('?') > 0) {
+                            requestParameters = new HashMap<>();
+                            String[] requestParsedParsed = requestParsed[1].split("\\?");
+                            requestFileName = requestParsedParsed[0];
+                            String[] parameters = requestParsedParsed[1].split("&");
+                            for (int i = 0; i < parameters.length; i++) {
+                                String[] parameterTMP = parameters[i].split("=");
+                                requestParameters.put(parameterTMP[0], parameterTMP[1]);
+                            }
+                        }
+                     //   System.out.println(requestFileName);
                         if (requestParsed[0].equals("GET")) {
-                            File getFile = new File(ROOT_DIR + requestParsed[1]);
-                            String[] parentDirectories = requestParsed[1].split("/");
+                            File getFile = new File(ROOT_DIR + requestFileName);
+                            String[] parentDirectories = requestFileName.split("/");
                             if (getFile.isFile()) {
                                 String mimetype = Files.probeContentType(getFile.toPath());
                                 try (FileInputStream fis = new FileInputStream(getFile);
@@ -63,6 +84,7 @@ public class Main {
                                         bufferedWriter.flush();
                                     }
                                 }
+
                             } else if (getFile.isDirectory()) {
                                 String parentDir = "";
                                 String fullDir = "";
@@ -79,6 +101,15 @@ public class Main {
                                 bufferedWriter.write("\r\n");
                                 bufferedWriter.write("<html><body>");
                                 File[] files = getFile.listFiles();
+                                if (requestParameters != null) {
+                                    if (requestParameters.containsKey("sort")) {
+                                        if (requestParameters.containsKey("dir")) {
+                                            files = sortFiles(files, requestParameters.get("sort"), requestParameters.get("dir"));
+                                        } else {
+                                            files = sortFiles(files, requestParameters.get("sort"), null);
+                                        }
+                                    }
+                                }
                                 bufferedWriter.write("<h1>Direktorijos turinys:</h1><pre>\r\n");
                                 bufferedWriter.write("<a href=http://localhost:8888/" + parentDir + "> <-Atgal </a> \r\n");
                                 for (int i = 0; i < files.length; i++) {
@@ -91,12 +122,39 @@ public class Main {
                                 bufferedWriter.write("</pre></body></html> \r\n");
                                 bufferedWriter.flush();
                             } else if (!getFile.exists()) {
-                                bufferedWriter.write("HTTP/1.1 404 Not Found\r\n");
-                                bufferedWriter.write("Server: Java MyServer\r\n");
-                                bufferedWriter.write("Content-Type: text/html\r\n");
-                                bufferedWriter.write("Connection: Closed \r\n");
-                                bufferedWriter.write("\r\n");
-                                bufferedWriter.flush();
+                                ///
+                                ///  jei kriepiasi i /servlet bandau iskviesti klase pagal pavadinima
+                                ///  ir paduoti jam parametus.
+                                ///
+                                ///  Idomu butu gauti pastabu
+                                ///
+                                if ("servlet".equals(requestFileName.split("/")[1])) {
+                                    if (requestFileName.split("/").length > 2) {
+                                        Main main = new Main();
+                                        String className = main.getClass().getPackageName()+"."+requestFileName.split("/")[2];
+                                        System.out.println( "sevletas---> " + className);
+                                        try {
+                                            Class<?> clazz = Class.forName(className);
+                                            Method m = null;
+                                            try {
+                                                m = clazz.getMethod("response", null);
+                                            } catch (NoSuchMethodException | SecurityException e) {
+                                                // TODO Auto-generated catch block
+                                                e.printStackTrace();
+                                            }
+
+                                        } catch (ClassNotFoundException e) {
+                                            System.err.println("Klaida servleto nerado "+e.getMessage());
+                                        }
+                                    }
+                                } else {
+                                    bufferedWriter.write("HTTP/1.1 404 Not Found\r\n");
+                                    bufferedWriter.write("Server: Java MyServer\r\n");
+                                    bufferedWriter.write("Content-Type: text/html\r\n");
+                                    bufferedWriter.write("Connection: Closed \r\n");
+                                    bufferedWriter.write("\r\n");
+                                    bufferedWriter.flush();
+                                }
                             }
                         } else if (requestParsed[0].equals("POST")) {
                             ArrayList<String> uploadData = new ArrayList();
@@ -147,7 +205,6 @@ public class Main {
                             bufferedWriter.write("\r\n");
                             bufferedWriter.flush();
                         }
-
                     }
                 } catch (IOException ex) {
                     System.out.println("Klaida iostream " + ex.getMessage());
@@ -158,4 +215,62 @@ public class Main {
         }
     }
 
+    public static File[] sortFiles(File[] files, String sortMode, String listMode) {
+        File[] sortedFiles = new File[files.length];
+        ArrayList<File> fileSorted = new ArrayList<>();
+        ArrayList<File> dirSorted = new ArrayList<>();
+        if (files != null) {
+            for (int i = 0; i < files.length; i++) {
+                if (listMode != null) {
+                    if (files[i].isDirectory()) {
+                        dirSorted.add(files[i]);
+                    } else {
+                        fileSorted.add(files[i]);
+                    }
+                } else {
+                    fileSorted.add(files[i]);
+                }
+            }
+        }
+        if ("asc".equals(sortMode)) {
+            if (listMode != null) {
+                Collections.sort(fileSorted);
+                Collections.sort(dirSorted);
+            } else {
+                Collections.sort(fileSorted);
+            }
+        } else if ("desc".equals(sortMode)) {
+            if (listMode != null) {
+                Collections.sort(fileSorted, Collections.reverseOrder());
+                Collections.sort(dirSorted, Collections.reverseOrder());
+            } else {
+                Collections.sort(fileSorted, Collections.reverseOrder());
+            }
+        }
+        if ("first".equals(listMode)) {
+            dirSorted.addAll(fileSorted);
+            for (int i = 0; i < dirSorted.size(); i++) {
+                sortedFiles[i] = dirSorted.get(i);
+            }
+            return sortedFiles;
+        } else if ("last".equals(listMode)) {
+            fileSorted.addAll(dirSorted);
+            for (int i = 0; i < fileSorted.size(); i++) {
+                sortedFiles[i] = fileSorted.get(i);
+            }
+        } else {
+            fileSorted.addAll(dirSorted);
+            for (int i = 0; i < fileSorted.size(); i++) {
+                sortedFiles[i] = fileSorted.get(i);
+            }
+        }
+        return sortedFiles;
+    }
+
+    public static String callServlet(String className) {
+        String r = " ";
+
+
+        return r;
+    }
 }
