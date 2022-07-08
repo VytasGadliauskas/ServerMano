@@ -1,6 +1,8 @@
 package ServerMano;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -53,7 +55,7 @@ public class Main {
                                 requestParameters.put(parameterTMP[0], parameterTMP[1]);
                             }
                         }
-                     //   System.out.println(requestFileName);
+                        //   System.out.println(requestFileName);
                         if (requestParsed[0].equals("GET")) {
                             File getFile = new File(ROOT_DIR + requestFileName);
                             String[] parentDirectories = requestFileName.split("/");
@@ -126,25 +128,43 @@ public class Main {
                                 ///  jei kriepiasi i /servlet bandau iskviesti klase pagal pavadinima
                                 ///  ir paduoti jam parametus.
                                 ///
-                                ///  Idomu butu gauti pastabu
+                                ///  BetKokiaKlase.getClass.super.MyServlet  <-- parameters or null
                                 ///
                                 if ("servlet".equals(requestFileName.split("/")[1])) {
                                     if (requestFileName.split("/").length > 2) {
                                         Main main = new Main();
-                                        String className = main.getClass().getPackageName()+"."+requestFileName.split("/")[2];
-                                        System.out.println( "sevletas---> " + className);
+                                        String className = main.getClass().getPackageName() + "." + requestFileName.split("/")[2];
                                         try {
                                             Class<?> clazz = Class.forName(className);
-                                            Method m = null;
                                             try {
-                                                m = clazz.getMethod("response", null);
-                                            } catch (NoSuchMethodException | SecurityException e) {
-                                                // TODO Auto-generated catch block
-                                                e.printStackTrace();
+                                                if (requestParameters == null){requestParameters = new HashMap<>();}
+                                                MyServlet myServlet = (MyServlet) clazz.getDeclaredConstructor(requestParameters.getClass())
+                                                        .newInstance(requestParameters);
+                                                if (myServlet.response() != null) {
+                                                    bufferedWriter.write(myServlet.response());
+                                                } else {
+                                                    bufferedWriter.write("HTTP/1.1 200 OK\r\n" + "Content-Type: text/html\r\n" + "\r\n" +
+                                                            "<!DOCTYPE html><html><head><title>Servlet klaida</title></head><body>" +
+                                                            "<h2>klaida su servletu" + myServlet.getClass().getName()+ " </h2><pre>" +
+                                                            "</pre></body></html>");
+                                                }
+                                                bufferedWriter.flush();
+                                            } catch (InvocationTargetException e) {
+                                                System.err.println("Klaida  " + e.getMessage());
+                                            } catch (InstantiationException e) {
+                                                System.err.println("Klaida  " + e.getMessage());
+                                            } catch (IllegalAccessException e) {
+                                                System.err.println("Klaida  " + e.getMessage());
+                                            } catch (NoSuchMethodException e) {
+                                                System.err.println("Klaida  " + e.getMessage());
                                             }
-
                                         } catch (ClassNotFoundException e) {
-                                            System.err.println("Klaida servleto nerado "+e.getMessage());
+                                            bufferedWriter.write("HTTP/1.1 404 Not Found\r\n");
+                                            bufferedWriter.write("Server: Java MyServer\r\n");
+                                            bufferedWriter.write("Content-Type: text/html\r\n");
+                                            bufferedWriter.write("Connection: Closed \r\n");
+                                            bufferedWriter.write("\r\n");
+                                            bufferedWriter.flush();
                                         }
                                     }
                                 } else {
@@ -265,12 +285,5 @@ public class Main {
             }
         }
         return sortedFiles;
-    }
-
-    public static String callServlet(String className) {
-        String r = " ";
-
-
-        return r;
     }
 }
