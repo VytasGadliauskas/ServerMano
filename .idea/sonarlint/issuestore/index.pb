@@ -10,8 +10,6 @@ X
 -src/ServerMano/resources/dir1/dir2/index.html,6/9/69eccb8e1faf2b712c24dde6d71539eb5dac4234
 T
 $src/ServerMano/resources/upload.html,e/c/ecd0b479323d22acaa5f0cb1b7cf43a56bb69b87
-S
-#src/ServerMano/resources/index.html,4/c/4c7e46d255e359c565a0980a6b9fb079e8720cb3
 w
 G.idea/sonarlint/issuestore/a/9/a935d83de83cc6843b12d5d664509b150fa28f29,9/e/9eb872cefb4a538084136ac6a41814a4a4a619c3
 w
@@ -34,9 +32,3 @@ W
 'src/ServerMano/resources/dir2/dddd.html,a/a/aada85aa40bd6a0ff6524933b0b81af30af47760
 R
 "src/ServerMano/resources/dddd.html,a/3/a379b6d8ff673b771842fabf1845a33313e3f40f
-M
-src/ServerMano/MyServlet.java,8/a/8a71f88c7172447b68ef9588755fa39c44d6508d
-N
-src/ServerMano/EchoTestas.java,4/7/479d73ba6d16940cf2c47ca97def2c9f9b23cdb4
-R
-"src/ServerMano/KitasServletas.java,8/d/8d872687961066352f03ea2cd0374695951369f9
