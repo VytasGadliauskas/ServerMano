@@ -1,6 +1,5 @@
-package ServerMano.resources;
+package ServerMano;
 
-import ServerMano.MyServlet;
 
 import java.util.HashMap;
 import java.util.Map;
