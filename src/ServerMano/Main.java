@@ -123,14 +123,15 @@ public class Main {
                                 bufferedWriter.write("</pre></body></html> \r\n");
                                 bufferedWriter.flush();
                             } else if (!getFile.exists()) {
-                                ///
-                                ///  jei kriepiasi i /servlet bandau isskviesti klase pagal pavadinima
-                                ///  ir paduoti jam parametus.
-                                ///
-                                ///  Igyvendinti servletai:
-                                ///  public class EchoTestas extends MyServlet
-                                ///  public class KitasServletas extends MyServlet
-                                ///
+                            //
+                            //  jei kriepiasi i /servlet bandau issikviesti klase pagal pavadinima
+                            //  ir paduoti jam parametus.
+                            //
+                            //  Igyvendinti servletai:
+                            //  public class EchoTestas extends MyServlet
+                            //  public class KitasServletas extends MyServlet
+                            //  PVZ: http://localhost:8888/servlet/EchoTestas?par1=aaa&par2=bbb
+                            //
                                 if ("servlet".equals(requestFileName.split("/")[1])) {
                                     if (requestFileName.split("/").length > 2) {
                                         Main main = new Main();
